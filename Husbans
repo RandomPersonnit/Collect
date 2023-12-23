@@ -16,7 +16,7 @@ class AutoReplyModule(loader.Module):
         self.protecc_command = "/protecc"
 
         self.husbando_bot = "@Collect_your_husbando_bot"
-        self.target_chats = ["@ichigochats"]
+        self.target_chats = ["@ichigochat", "@ichigochats"]
         self.target_entities = []
 
     async def client_ready(self, client, db):
