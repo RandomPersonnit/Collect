@@ -1,4 +1,4 @@
-from telethon import events, utils
+from telethon import events
 
 from .. import loader, utils
 
@@ -17,6 +17,11 @@ class AutoReplyModule(loader.Module):
 
         self.husbando_bot = "@Collect_your_husbando_bot"
         self.target_chat = "@ichigochats"
+        self.target_entity = None
+
+    async def client_ready(self, client, db):
+        self.client = client
+        self.target_entity = await self.client.get_entity(self.target_chat)
 
     @loader.unrestricted
     async def cponcmd(self, message):
@@ -27,19 +32,16 @@ class AutoReplyModule(loader.Module):
         self.reply_running = True
         await utils.answer(message, self.reply_success_message)
 
-        async def reply_handler(event):
-            if event.is_reply and event.chat_id == self.husbando_bot and event.reply_to_msg_id and event.out:
-                target_chat = await event.client.get_entity(self.target_chat)
-                replied_msg = await event.get_reply_message()
-                
-                if replied_msg.media and isinstance(replied_msg.media, types.MessageMediaPhoto):
-                    async for message in event.client.iter_messages(target_chat, reverse=True):
-                        if message.from_id == event.client.uid and message.text and message.text.startswith(self.protecc_command):
-                            anime_name = message.text[len(self.protecc_command)+1:]
-                            await message.reply(f"Вы отправили фото из аниме: {anime_name}")
-                            break
-
-        message.client.add_event_handler(reply_handler, events.NewMessage(incoming=True))
+    @events.register(events.NewMessage(incoming=True, chats=hikka_module.target_entity))
+    async def reply_handler(self, event):
+        if event.is_reply and event.chat_id == self.husbando_bot and event.reply_to_msg_id and event.out:
+            replied_msg = await event.get_reply_message()
+            if replied_msg.media and isinstance(replied_msg.media, types.MessageMediaPhoto):
+                async for message in self.client.iter_messages(self.target_entity, reverse=True):
+                    if message.from_id == self.client.uid and message.text and message.text.startswith(self.protecc_command):
+                        anime_name = message.text[len(self.protecc_command) + 1:]
+                        await message.reply(f"Вы отправили фото из аниме: {anime_name}")
+                        break
 
     @loader.unrestricted
     async def cpoffcmd(self, message):
