@@ -1,6 +1,5 @@
 import asyncio
-from hikkatl import types
-from telethon import functions
+from telethon import events
 
 from .. import loader, utils
 
@@ -29,10 +28,10 @@ class SendMessageModule(loader.Module):
         await utils.answer(message, self.cpon_success_message)
 
         async def reply_handler(event):
-            if event.chat_id == self.husbando_bot and event.media and event.media.photo:
+            if event.is_chat and event.chat_id == self.husbando_bot and event.media and event.media.photo:
                 await event.reply("Введите название аниме после команды /protecc")
 
-        message.client.add_event_handler(reply_handler, types.Message(incoming=True))
+        message.client.add_event_handler(reply_handler, events.NewMessage(incoming=True, func=lambda e: e.is_reply and e.chat_id == self.husbando_bot))
 
     @loader.unrestricted
     async def cpoffcmd(self, message: types.Message):
