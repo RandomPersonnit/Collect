@@ -19,7 +19,7 @@ class SendMessageModule(loader.Module):
         self.husbando_bot = "@Collect_your_husbando_bot"
 
     @loader.unrestricted
-    async def cponcmd(self, message: types.Message):
+    async def cponcmd(self, message):
         """Запускает автоответ на бота @Collect_your_husbando_bot"""
         if self.cpon_running:
             await utils.answer(message, self.cpon_already_running_message)
@@ -28,13 +28,13 @@ class SendMessageModule(loader.Module):
         await utils.answer(message, self.cpon_success_message)
 
         async def reply_handler(event):
-            if event.is_chat and event.chat_id == self.husbando_bot and event.media and event.media.photo:
+            if event.is_reply and event.chat_id == self.husbando_bot and event.reply_to_msg_id and event.media and event.media.photo:
                 await event.reply("Введите название аниме после команды /protecc")
 
-        message.client.add_event_handler(reply_handler, events.NewMessage(incoming=True, func=lambda e: e.is_reply and e.chat_id == self.husbando_bot))
+        message.client.add_event_handler(reply_handler, events.NewMessage(func=lambda e: e.is_reply and e.chat_id == self.husbando_bot))
 
     @loader.unrestricted
-    async def cpoffcmd(self, message: types.Message):
+    async def cpoffcmd(self, message):
         """Останавливает автоответ на бота @Collect_your_husbando_bot"""
         if not self.cpon_running:
             await utils.answer(message, "❌️ Автоответ уже остановлен.")
