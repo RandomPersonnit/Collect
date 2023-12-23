@@ -1,4 +1,4 @@
-from telethon import events
+from telethon import events, types
 
 from .. import loader, utils
 
@@ -16,12 +16,14 @@ class AutoReplyModule(loader.Module):
         self.protecc_command = "/protecc"
 
         self.husbando_bot = "@Collect_your_husbando_bot"
-        self.target_chat = "@ichigochats"
-        self.target_entity = None
+        self.target_chats = ["@ichigochats"]
+        self.target_entities = []
 
     async def client_ready(self, client, db):
         self.client = client
-        self.target_entity = await self.client.get_entity(self.target_chat)
+        for chat in self.target_chats:
+            entity = await self.client.get_entity(chat)
+            self.target_entities.append(entity)
 
     @loader.unrestricted
     async def cponcmd(self, message):
@@ -32,16 +34,19 @@ class AutoReplyModule(loader.Module):
         self.reply_running = True
         await utils.answer(message, self.reply_success_message)
 
-    @events.register(events.NewMessage(incoming=True, chats=None))
+    @events.register(events.NewMessage(incoming=True, chats=None, from_users=[self.husbando_bot]))
     async def reply_handler(self, event):
-        if event.is_reply and event.chat_id == self.husbando_bot and event.reply_to_msg_id and event.out:
+        if event.is_reply and event.reply_to_msg_id and event.out:
             replied_msg = await event.get_reply_message()
-            if replied_msg.media and isinstance(replied_msg.media, types.MessageMediaPhoto):
-                async for message in self.client.iter_messages(self.target_entity, reverse=True):
-                    if message.from_id == self.client.uid and message.text and message.text.startswith(self.protecc_command):
-                        anime_name = message.text[len(self.protecc_command) + 1:]
-                        await message.reply(f"Вы отправили фото из аниме: {anime_name}")
+            if replied_msg and isinstance(replied_msg.media, types.MessageMediaPhoto):
+                anime_name = None
+                async for message in self.client.iter_messages(event.chat_id, reverse=True):
+                    if message.from_id == self.client.uid and message.text and message.text.startswith(self.protecc_command) and message.text.find(self.husbando_bot) != -1:
+                        anime_name = message.text.split(self.protecc_command)[1].strip()
                         break
+                if anime_name:
+                    for target_entity in self.target_entities:
+                        await self.client.send_message(target_entity, f"{self.protecc_command}{self.husbando_bot} {anime_name}")
 
     @loader.unrestricted
     async def cpoffcmd(self, message):
