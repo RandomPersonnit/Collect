@@ -1,4 +1,4 @@
-from telethon import events
+from telethon import events, utils
 
 from .. import loader, utils
 
@@ -13,8 +13,10 @@ class AutoReplyModule(loader.Module):
         self.reply_running = False
         self.reply_success_message = "<b>🔥 Автоответ на бота @Collect_your_husbando_bot успешно запущен<b>"
         self.reply_already_running_message = "❌️ Автоответ на бота @Collect_your_husbando_bot уже запущен"
+        self.protecc_command = "/protecc"
 
         self.husbando_bot = "@Collect_your_husbando_bot"
+        self.target_chat = "@ichigochats"
 
     @loader.unrestricted
     async def cponcmd(self, message):
@@ -26,8 +28,16 @@ class AutoReplyModule(loader.Module):
         await utils.answer(message, self.reply_success_message)
 
         async def reply_handler(event):
-            if event.is_reply and event.chat_id == self.husbando_bot and event.reply_to_msg_id and event.media and event.media.photo:
-                await event.reply("Введите название аниме после команды /protecc")
+            if event.is_reply and event.chat_id == self.husbando_bot and event.reply_to_msg_id and event.out:
+                target_chat = await event.client.get_entity(self.target_chat)
+                replied_msg = await event.get_reply_message()
+                
+                if replied_msg.media and isinstance(replied_msg.media, types.MessageMediaPhoto):
+                    async for message in event.client.iter_messages(target_chat, reverse=True):
+                        if message.from_id == event.client.uid and message.text and message.text.startswith(self.protecc_command):
+                            anime_name = message.text[len(self.protecc_command)+1:]
+                            await message.reply(f"Вы отправили фото из аниме: {anime_name}")
+                            break
 
         message.client.add_event_handler(reply_handler, events.NewMessage(incoming=True))
 
