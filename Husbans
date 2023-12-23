@@ -1,0 +1,44 @@
+import asyncio
+from hikkatl import types
+from telethon import functions
+
+from .. import loader, utils
+
+
+@loader.tds
+class SendMessageModule(loader.Module):
+    """Модуль для автоматической отправки сообщений разным ботам"""
+
+    strings = {"name": "AutoSend"}
+
+    def __init__(self):
+        self.cpon_running = False
+        self.cpon_success_message = "<b>🔥 Автоответ на бота @Collect_your_husbando_bot успешно запущен<b>"
+        self.cpon_already_running_message = "❌️ Автоответ на бота @Collect_your_husbando_bot уже запущен"
+
+        self.ichigo_chat = "@ichigochat"
+        self.husbando_bot = "@Collect_your_husbando_bot"
+
+    @loader.unrestricted
+    async def cponcmd(self, message: types.Message):
+        """Запускает автоответ на бота @Collect_your_husbando_bot"""
+        if self.cpon_running:
+            await utils.answer(message, self.cpon_already_running_message)
+            return
+        self.cpon_running = True
+        await utils.answer(message, self.cpon_success_message)
+
+        async def reply_handler(event):
+            if event.chat_id == self.husbando_bot and event.media and event.media.photo:
+                await event.reply("Введите название аниме после команды /protecc")
+
+        message.client.add_event_handler(reply_handler, types.Message(incoming=True))
+
+    @loader.unrestricted
+    async def cpoffcmd(self, message: types.Message):
+        """Останавливает автоответ на бота @Collect_your_husbando_bot"""
+        if not self.cpon_running:
+            await utils.answer(message, "❌️ Автоответ уже остановлен.")
+            return
+        self.cpon_running = False
+        await utils.answer(message, "✔️ Автоответ остановлен.")
