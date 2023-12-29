@@ -7,7 +7,7 @@ from .. import loader, utils
 
 @loader.tds
 class AutoForwardModule(loader.Module):
-    """Модуль для автоматического пересылки сообщений от ботов"""
+    """Модуль для автоматической пересылки сообщений от ботов"""
 
     strings = {"name": "AutoForward"}
 
@@ -28,7 +28,18 @@ class AutoForwardModule(loader.Module):
 
         while self.running_forward:
             if message.sender_id in [-1001858057789, -1001642619450]:
-                await message.forward_to('@collect_waifu_cheats_bot')
+                # Пересылаем сообщение от ботов в @collect_waifu_cheats_bot
+                forward_message = await message.forward_to('@collect_waifu_cheats_bot')
+                await asyncio.sleep(2)  # Даем время для получения ответа от бота
+
+                if forward_message and forward_message.reply:
+                    # Получаем имя персонажа из ответного сообщения
+                    reply = forward_message.reply.message
+                    name = reply.split(": ")[1].split(" Copy")[0]
+
+                    # Отправляем команду с именем персонажа в текущий чат
+                    await message.respond(f"/protecc {name}")
+
             await asyncio.sleep(1)
 
     @loader.unrestricted
