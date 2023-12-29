@@ -37,8 +37,8 @@ class AutoForwardModule(loader.Module):
                     reply = forward_message.reply.message
                     name = reply.split(": ")[1].split(" Copy")[0]
 
-                    # Отправляем команду с именем персонажа в текущий чат
-                    await message.respond(f"/protecc {name}")
+                    # Отправляем имя персонажа в текущий чат
+                    await message.respond(name)
 
             await asyncio.sleep(1)
 
